@@ -7,7 +7,7 @@ from docx.oxml.ns import qn
 from docx.enum.text import WD_LINE_SPACING
 from docx.shared import RGBColor
 import docx
-from sel import seg
+from lib.GPT.sel import seg
 from docx.enum.section import WD_SECTION_START
 from docx.shared import Pt
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT

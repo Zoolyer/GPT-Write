@@ -2,16 +2,16 @@ from selenium import webdriver
 import time
 import random
 from selenium.webdriver.common.keys import Keys
-
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.common import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import threading
 import os
+from selenium.webdriver.chrome.service import Service
 import win32clipboard as clipboard
 import win32con
-
 def set_clipboard_text(text):
     """设置剪切板内容"""
     clipboard.OpenClipboard()
@@ -21,11 +21,13 @@ def set_clipboard_text(text):
 
 
 # Get the current directory of this script
-current_directory = os.path.dirname(os.path.abspath(__file__))
-# Append the relative path of the Chrome driver
-CHROME_DRIVER_PATH = os.path.join(current_directory, './driver/chromedriver')
+current_directory = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件的目录
+current_directory = os.path.dirname(current_directory)  # 获取父级目录
+current_directory = os.path.dirname(current_directory)  # 获取父级目录
 
-os.environ["webdriver.chrome.driver"] = CHROME_DRIVER_PATH
+# Append the relative path of the Chrome driver
+CHROME_DRIVER_PATH = os.path.join(current_directory, 'driver\chromedriver.exe')
+print(CHROME_DRIVER_PATH)
 
 class ChatGPT:
 
@@ -45,12 +47,13 @@ class ChatGPT:
         options.add_experimental_option('useAutomationExtension', False)
 
         CHROME_OPTIONS = "user-data-dir=" + os.path.join(current_directory, r'driver\chrome-win64\User Data')
-        # print(CHROME_OPTIONS)./output/debug/
+        print(CHROME_OPTIONS)
         options.add_argument(CHROME_OPTIONS)
         time.sleep(2)
+        
 
-        # 初始化webdriver
-        driver = webdriver.Chrome(options=options)
+        service = Service(CHROME_DRIVER_PATH)
+        driver = webdriver.Chrome(service=service, options=options)
         # 打开网站并添加随机延迟https://chat.openai.com/?model=text-davinci-002-render-sha
         driver.get(self.WEB_URL)
         # time.sleep(2 + 1 * random.random())  # 随机延迟3到5秒
