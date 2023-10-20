@@ -4,13 +4,16 @@ import os
 import time
 import pygetwindow as gw
 import pyautogui
+
+# Get the current directory of this script
+current_directory = os.path.dirname(os.path.abspath(__file__))
 def seg(title="mor"):
     # 打开Word应用程序
     doc_app = win32.gencache.EnsureDispatch('Word.Application')
     doc_app.Visible = True
 
     # 打开一个已经存在的文档
-    file_path = "F:/GPT/ChatGPTv1/output.docx"
+    file_path = os.path.join(current_directory, 'output\debug\output.docx')
     doc = doc_app.Documents.Open(file_path)
 
     # 添加延迟，确保Word处理完毕
@@ -80,7 +83,7 @@ def seg(title="mor"):
     # doc.Save()
 
     # 保存文档为title.docx
-    doc.SaveAs(os.path.join(os.getcwd(), title+".docx"))
+    doc.SaveAs(os.path.join(os.getcwd(), r"output\\"+title+".docx"))
     time.sleep(1)
     doc.Close()
     doc_app.Quit()

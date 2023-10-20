@@ -9,39 +9,60 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import threading
 import os
-CHROME_DRIVER_PATH = 'F:/GPT/ChatGPTv1/chromedriver'
+import win32clipboard as clipboard
+import win32con
+
+def set_clipboard_text(text):
+    """设置剪切板内容"""
+    clipboard.OpenClipboard()
+    clipboard.EmptyClipboard()
+    clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
+    clipboard.CloseClipboard()
+
+
+# Get the current directory of this script
+current_directory = os.path.dirname(os.path.abspath(__file__))
+# Append the relative path of the Chrome driver
+CHROME_DRIVER_PATH = os.path.join(current_directory, './driver/chromedriver')
+
 os.environ["webdriver.chrome.driver"] = CHROME_DRIVER_PATH
 
-WEB_URL = 'https://chat.openai.com/?model=text-davinci-002-render-sha'
-# WEB_URL = 'https://chat.openai.com/?model=gpt-4'
 class ChatGPT:
 
-    def __init__(self):
+    def __init__(self,gpt):
         self.driver = None
+        if gpt == "4":
+            self.WEB_URL = 'https://chat.openai.com/?model=gpt-4'
+        else:
+            self.WEB_URL = 'https://chat.openai.com/?model=text-davinci-002-render-sha'
         self.previous_text = ""
     def open_website_with_proxy(self):
         options = webdriver.ChromeOptions()
         # 禁用 window.navigator.webdriver 标志
+        CHROME_PATH = os.path.join(current_directory, 'driver\chrome-win64\chrome.exe')
+        options.binary_location = CHROME_PATH
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
 
-        # 设置常见的 User-Agent
-        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        options.add_argument(f"user-agent={user_agent}")
-
-        options.add_argument("user-data-dir=C:/Users/Administrator/AppData/Local/Google/Chrome/User Data")
+        CHROME_OPTIONS = "user-data-dir=" + os.path.join(current_directory, r'driver\chrome-win64\User Data')
+        # print(CHROME_OPTIONS)./output/debug/
+        options.add_argument(CHROME_OPTIONS)
         time.sleep(2)
 
         # 初始化webdriver
         driver = webdriver.Chrome(options=options)
         # 打开网站并添加随机延迟https://chat.openai.com/?model=text-davinci-002-render-sha
-        driver.get(WEB_URL)
+        driver.get(self.WEB_URL)
         # time.sleep(2 + 1 * random.random())  # 随机延迟3到5秒
 
-        button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'div.flex.flex-row.justify-end > button.btn.btn-primary'))
-        )
-        button.click()
+        try:
+            button = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, 'div.flex.flex-row.justify-end > button.btn.btn-primary'))
+            )
+            button.click()
+        except:
+            print("未能在指定时间内找到按钮，跳过点击操作。")
 
         return driver
 
@@ -71,18 +92,30 @@ class ChatGPT:
 
         return div_element.text
 
+    # def send_message_to_chat(self, message):
+    #     # 定位输入框
+    #     textarea = self.driver.find_element(By.ID, "prompt-textarea")
+    #     # 清除输入框中的任何现有内容
+    #     textarea.clear()
+    #
+    #     # 处理并输入消息
+    #     for char in message:
+    #         if char == '\n':
+    #             textarea.send_keys(Keys.SHIFT + Keys.ENTER)
+    #         else:
+    #             textarea.send_keys(char)
+
     def send_message_to_chat(self, message):
         # 定位输入框
         textarea = self.driver.find_element(By.ID, "prompt-textarea")
         # 清除输入框中的任何现有内容
         textarea.clear()
 
-        # 处理并输入消息
-        for char in message:
-            if char == '\n':
-                textarea.send_keys(Keys.SHIFT + Keys.ENTER)
-            else:
-                textarea.send_keys(char)
+        # 将消息复制到剪切板
+        set_clipboard_text(message)
+
+        # 粘贴消息到输入框
+        textarea.send_keys(Keys.CONTROL, 'v')
 
     def submit_message(self):
         # 定位发送按钮
@@ -114,20 +147,6 @@ class ChatGPT:
             return False
 
         return False
-    def input_thread(self):
-        while True:
-            msg = input(
-                "Enter the message to send to ChatGPT (type 'exit' to close the browser, 'submit' to send the message): ")
-            if msg.lower() == 'exit':
-                self.driver.close()
-                break
-            elif msg.lower() == 'submit':
-                self.submit_message()
-            else:
-                self.send_message_to_chat(msg)
-
-            # 检查并打印按钮文本
-            self.check_and_print_button_text()
     def start(self):
         self.driver = self.open_website_with_proxy()
         time.sleep(1)

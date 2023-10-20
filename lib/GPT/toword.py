@@ -14,7 +14,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 def process_txt_modified(input_filename, output_filename):
 
     # 读取文本文件内容
-    with open(input_filename, 'r', encoding='gbk') as file:
+    with open(input_filename, 'r', encoding='utf-8') as file:
         lines = file.readlines()
 
     # 定义一个函数来检查行中是否有括号内容
@@ -22,22 +22,68 @@ def process_txt_modified(input_filename, output_filename):
         pattern = re.compile(r'<'+ tag + r'>.*（.*?）.*</' + tag + r'>')
         return pattern.search(line) is not None
 
-    # 删除包含（内容）的<t1>, <t2>, <t3>标签行
-    cleaned_lines = [line for line in lines if not any(has_brackets_content(line, tag) for tag in ["t1", "t2", "t3"])]
+        # 定义一个函数来检查行中是否有普通括号内容
+    def has_regular_brackets_content(line):
+        pattern = re.compile(r'.*\(.*\).*')
+        return pattern.search(line) is not None
+
+        # 定义一个函数来检查行中是否有特定的括号内容
+    def has_specific_brackets_content(line, start_bracket, end_bracket):
+        pattern = re.compile(r'.*' + re.escape(start_bracket) + r'(继续|续)' + re.escape(end_bracket) + r'.*')
+        return pattern.search(line) is not None
+
+    def remove_tags_from_line(line):
+        """移除指定的标签并返回移除的标签和没有标签的内容"""
+        tags_to_remove = ["<t1>", "</t1>", "<t2>", "</t2>", "<t3>", "</t3>"]
+        saved_tags = [tag for tag in tags_to_remove if tag in line]
+        for tag in tags_to_remove:
+            line = line.replace(tag, "")
+        return saved_tags, line.strip()
+
+    def remove_starting_index(line):
+        split_content = line.split(" ")
+        if len(split_content) > 1:
+            return split_content[-1].strip()
+        return line
+
+    # 删除包含（内容）的<t1>, <t2>, <t3>标签行和包含普通括号的行
+    cleaned_lines = []
+    for line in lines:
+        saved_tags, line_without_tags = remove_tags_from_line(line)
+
+        if any(tag in saved_tags for tag in ["<t1>", "<t2>", "<t3>"]):
+            # 如果存在特定的括号内容，则跳过此行
+            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in
+                   [("（", "）"), ("(", ")")]):
+                continue
+            cleaned_content = remove_starting_index(line_without_tags)
+            # 将保存的标签添加回去
+            cleaned_line = "".join(saved_tags[0]) + cleaned_content +saved_tags[1]
+            # print(cleaned_line)
+            cleaned_lines.append(cleaned_line)
+        else:
+            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in
+                   [("（", "）"), ("(", ")")]):
+                continue
+            # print("line:"+line)
+            cleaned_lines.append(line)
 
     # 合并处理
     def merge_tags(content, tag):
-        pattern = re.compile(r'<' + tag + r'>(.*?)</' + tag + r'>\s*<' + tag + r'>(.*?)</' + tag + r'>')
+    # 正则表达式模式匹配两个相邻的、内容相同的同一级别的标签
+        pattern = re.compile(r'<' + tag + r'>(.*?)</' + tag + r'>\s*<' + tag + r'>\1</' + tag + r'>')
         while pattern.search(content):
-            content = pattern.sub(r'<'+ tag + r'>\1\2</' + tag + r'>', content)
+            # 当匹配到两个相同内容的标签时，删除第二个标签
+            content = pattern.sub(r'<'+ tag + r'>\1', content)
         return content
+
 
     text_merged = ''.join(cleaned_lines)
     for tag in ["t1", "t2", "t3"]:
         text_merged = merge_tags(text_merged, tag)
 
     # 写入到输出文件
-    with open(output_filename, 'w', encoding='gbk') as file:
+    with open(output_filename, 'w', encoding='utf-8') as file:
         file.write(text_merged)
 
     return f"Processed content written to {output_filename}"
@@ -147,7 +193,7 @@ def txt_to_word(abstract_input, text_input, conclusion_input, output_docx,title)
     # 修改 Heading 1 样式的加粗属性
     heading3.font.bold = False
     # Process abstract_input
-    with open(abstract_input, 'r', encoding='gbk') as file:
+    with open(abstract_input, 'r', encoding='utf-8') as file:
         content = file.read()
     elements = process_content(content)
     for tag, text in elements:
@@ -207,9 +253,9 @@ def txt_to_word(abstract_input, text_input, conclusion_input, output_docx,title)
                 p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
                 p.paragraph_format.line_spacing = Pt(18)  # 1.5倍行距
                 p.paragraph_format.first_line_indent = Pt(24)  # 2字符缩进
-    process_txt_modified(text_input,text_input)
+    process_txt_modified(text_input,"text_input2.txt")
     # Process text_input with numbering
-    with open(text_input, 'r', encoding='gbk') as file:
+    with open("text_input2.txt", 'r', encoding='utf-8') as file:
         content = file.read()
     elements = process_content(content, with_numbering=True)
 
@@ -249,7 +295,7 @@ def txt_to_word(abstract_input, text_input, conclusion_input, output_docx,title)
 
 
     # Process conclusion_input
-    with open(conclusion_input, 'r', encoding='gbk') as file:
+    with open(conclusion_input, 'r', encoding='utf-8') as file:
         content = file.read()
     elements = process_content(content)
     for tag, text in elements:
@@ -397,4 +443,4 @@ def int_to_roman(num):
 if __name__ == "__main__":
     txt_to_word('abstract_input.txt', 'text_input.txt', 'conclusion_input.txt', 'output.docx',"我是标题")
     time.sleep(1)
-    seg()
+    # seg()
