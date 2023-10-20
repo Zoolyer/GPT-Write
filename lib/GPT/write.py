@@ -16,7 +16,7 @@ def savetxt(txt, name):
 def trim_txt_content(txt, keywords=None):
     # 查找最后一个换行符的位置
     if keywords is None:
-        keywords = ["以上内容","部分内容","此块内容","块内容","以上","论文"]
+        keywords = ["以上内容","部分内容","此块内容","块内容","以上","论文","此部分"]
     last_newline_pos = txt.rfind('\n')
     if last_newline_pos == -1:
         return txt  # 如果txt中没有换行符，直接返回原txt
@@ -68,6 +68,7 @@ def write(title ,num,gpt_num):
         while not gpt.check_and_print_button_text():
             pass
         txt = gpt.getLastMessage()
+        
         txt = trim_txt_content(txt)
         savetxt(txt,'./output/debug/text_input.txt')
 

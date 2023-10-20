@@ -45,27 +45,40 @@ def process_txt_modified(input_filename, output_filename):
         if len(split_content) > 1:
             return split_content[-1].strip()
         return line
+    # 初始化字典来保存每个t标签中的cleaned_content
+    t_contents = {
+        "t1": [],
+        "t2": [],
+        "t3": []
+    }
 
-    # 删除包含（内容）的<t1>, <t2>, <t3>标签行和包含普通括号的行
     cleaned_lines = []
+
     for line in lines:
         saved_tags, line_without_tags = remove_tags_from_line(line)
+        
+        # 检查是否存在指定的t标签
+        existing_tags = [tag for tag in ["t1", "t2", "t3"] if f"<{tag}>" in saved_tags]
 
-        if any(tag in saved_tags for tag in ["<t1>", "<t2>", "<t3>"]):
+        if existing_tags:
             # 如果存在特定的括号内容，则跳过此行
-            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in
-                   [("（", "）"), ("(", ")")]):
+            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in [("（", "）"), ("(", ")")]):
                 continue
             cleaned_content = remove_starting_index(line_without_tags)
+
+            # 检查cleaned_content是否已存在于相应的t标签列表中
+            current_tag = existing_tags[0]
+            if cleaned_content in t_contents[current_tag]:
+                continue
+            else:
+                t_contents[current_tag].append(cleaned_content)
+
             # 将保存的标签添加回去
-            cleaned_line = "".join(saved_tags[0]) + cleaned_content +saved_tags[1]
-            # print(cleaned_line)
+            cleaned_line = "".join(saved_tags[0]) + cleaned_content + saved_tags[1]
             cleaned_lines.append(cleaned_line)
         else:
-            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in
-                   [("（", "）"), ("(", ")")]):
+            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in [("（", "）"), ("(", ")")]):
                 continue
-            # print("line:"+line)
             cleaned_lines.append(line)
 
     # 合并处理
@@ -77,7 +90,7 @@ def process_txt_modified(input_filename, output_filename):
             content = pattern.sub(r'<'+ tag + r'>\1', content)
         return content
 
-
+    
     text_merged = ''.join(cleaned_lines)
     for tag in ["t1", "t2", "t3"]:
         text_merged = merge_tags(text_merged, tag)
@@ -253,9 +266,9 @@ def txt_to_word(abstract_input, text_input, conclusion_input, output_docx,title)
                 p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.MULTIPLE
                 p.paragraph_format.line_spacing = Pt(18)  # 1.5倍行距
                 p.paragraph_format.first_line_indent = Pt(24)  # 2字符缩进
-    process_txt_modified(text_input,"text_input2.txt")
+    process_txt_modified(text_input,"./output/debug/text_input2.txt")
     # Process text_input with numbering
-    with open("text_input2.txt", 'r', encoding='utf-8') as file:
+    with open("./output/debug/text_input2.txt", 'r', encoding='utf-8') as file:
         content = file.read()
     elements = process_content(content, with_numbering=True)
 
