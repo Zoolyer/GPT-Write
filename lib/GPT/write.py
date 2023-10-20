@@ -4,6 +4,7 @@ from lib.GPT.sel import seg
 import time
 import os
 import sys
+
 def delete_file_if_exists(filename):
     """删除指定的文件，如果它存在"""
     if os.path.exists(filename):
@@ -32,16 +33,17 @@ def trim_txt_content(txt, keywords=None):
 
     return txt
 def write(title ,num,gpt_num):
+
     # 命令行参数处理
     if title == "没有":
         print("请设置标题")
         sys.exit()
 
     # 删除指定的文件
-    delete_file_if_exists('abstract_input.txt')
-    delete_file_if_exists('text_input.txt')
-    delete_file_if_exists('conclusion_input.txt')
-    delete_file_if_exists('output.docx')
+    delete_file_if_exists('./output/debug/abstract_input.txt')
+    delete_file_if_exists('./output/debug/text_input.txt')
+    delete_file_if_exists('./output/debug/conclusion_input.txt')
+    delete_file_if_exists('./output/debug/output.docx')
 
     with open('./config/data.json', 'r', encoding='utf-8') as f:
         loaded_data = json.load(f)

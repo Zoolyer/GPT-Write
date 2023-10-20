@@ -13,7 +13,8 @@ def seg(title="mor"):
     doc_app.Visible = True
 
     # 打开一个已经存在的文档
-    file_path = os.path.join(current_directory, 'output\debug\output.docx')
+    file_path = os.path.join(current_directory, '..\..\output\debug\output.docx')
+    print(file_path)
     doc = doc_app.Documents.Open(file_path)
 
     # 添加延迟，确保Word处理完毕
