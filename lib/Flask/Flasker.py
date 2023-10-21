@@ -5,6 +5,7 @@ from lib.GPT.write import write
 import math
 import threading
 import os
+import pythoncom
 
 import datetime
 
@@ -32,12 +33,21 @@ def log_request(num_value):
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_file.write(f"{timestamp},{num_value + 4}\n")
 
+
 def get_requests_in_last_duration(duration_hours=3, duration_minutes=20):
     """
     Get the total num of requests in the last specified duration.
     """
     threshold_time = datetime.datetime.now() - datetime.timedelta(hours=duration_hours, minutes=duration_minutes)
     total_num = 0
+
+    # Ensure the directory exists, if not, create it
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Check if the file exists, if not, return 0
+    if not os.path.exists(log_file_path):
+        return total_num
 
     with open(log_file_path, "r") as log_file:  # Use the defined path
         lines = log_file.readlines()
@@ -51,6 +61,7 @@ def get_requests_in_last_duration(duration_hours=3, duration_minutes=20):
 
     return total_num
 
+
 def valid_gpt_value(value):
     if value not in ["3.5", "4"]:
         return False
@@ -59,6 +70,7 @@ def valid_gpt_value(value):
 def threaded_write(title_value, num, gpt_value):
     global thread_status
     try:
+        pythoncom.CoInitialize()  # Initialize the COM library
         write(title_value, num, gpt_value)
         thread_status = 2  # 标记执行成功但文件尚未下载
     except Exception as e:
@@ -70,22 +82,16 @@ def threaded_write(title_value, num, gpt_value):
 def generate_document():
     global thread_status
 
-
     # Check if the limit is exceeded
-    if get_requests_in_last_duration() > 50:
+    if get_requests_in_last_duration() >= 50:
         return jsonify({"error": "Request limit exceeded!"}), 429
     if thread_status == 1:
         return jsonify({"message": "Another task is currently running. Please wait."}), 429
 
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data provided!"}), 400
+    title_value = request.form.get("title", title)
+    num_value = request.form.get("num")
+    gpt_value = request.form.get("gpt")
 
-    title_value = data.get("title", title)
-    num_value = data.get("num")
-    gpt_value = data.get("gpt")
-
-    log_request(num_value)
 
     if not all([title_value, num_value, gpt_value]):
         return jsonify({"error": "Missing required parameters!"}), 400
@@ -95,6 +101,11 @@ def generate_document():
 
     num = max(2, math.ceil(int(num_value) / 700))
 
+    if not num:
+        log_request(0)  # Log with default value
+    else:
+        if gpt_value == "4":
+            log_request(int(num))
     try:
         thread_status = 1  # 标记线程为正在运行
         threading.Thread(target=threaded_write, args=(title_value, num, gpt_value)).start()
@@ -103,17 +114,40 @@ def generate_document():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+from lib.GPT.sel import seg
+
+@app.route('/test', methods=['GET'])
+def test():
+    try:
+        pythoncom.CoInitialize()  # Initialize the COM library
+        seg("test")
+    except Exception as e:
+        logging.error("An error occurred: " + str(e))  # Logging the error to the file
+        return "Error", 500
+
+    return "OK", 200
+
+
 @app.route('/download', methods=['GET'])
 def download_file():
     global thread_status
     title_value = request.args.get("title", title)
-    filepath = os.path.join("./output", f"{title_value}.docx")
 
+    # 获取当前Python脚本的绝对目录
+    base_directory = os.path.dirname(os.path.abspath(__file__))
+    base_directory = os.path.dirname(base_directory)  # 获取父级目录
+    base_directory = os.path.dirname(base_directory)  # 获取父级目录
+    # 生成完整的文件路径
+    filepath = os.path.join(base_directory, "output", f"{title_value}.docx")
+
+    print(filepath)
     if os.path.exists(filepath):
         thread_status = 0  # Reset the thread status after downloading the file
-        return send_from_directory(directory="./output", filename=f"{title_value}.docx", as_attachment=True)
+        return send_from_directory(directory=os.path.join(base_directory, "output"), path=f"{title_value}.docx",
+                                   as_attachment=True)
     else:
         return jsonify({"error": "File not found!"}), 404
+
 
 @app.route('/status', methods=['GET'])
 def get_status():

@@ -102,19 +102,6 @@ class ChatGPT:
 
         return div_element.text
 
-    # def send_message_to_chat(self, message):
-    #     # 定位输入框
-    #     textarea = self.driver.find_element(By.ID, "prompt-textarea")
-    #     # 清除输入框中的任何现有内容
-    #     textarea.clear()
-    #
-    #     # 处理并输入消息
-    #     for char in message:
-    #         if char == '\n':
-    #             textarea.send_keys(Keys.SHIFT + Keys.ENTER)
-    #         else:
-    #             textarea.send_keys(char)
-
     def send_message_to_chat(self, message):
         # 定位输入框
         textarea = self.driver.find_element(By.ID, "prompt-textarea")
@@ -126,6 +113,13 @@ class ChatGPT:
 
         # 粘贴消息到输入框
         textarea.send_keys(Keys.CONTROL, 'v')
+
+    def close_browser(self):
+        """
+        Close the current browser window.
+        """
+        if self.driver:
+            self.driver.quit()
 
     def submit_message(self):
         # 定位发送按钮
@@ -145,8 +139,10 @@ class ChatGPT:
                 if text != self.previous_text:
                     self.previous_text = text
                     if "Regenerate" in text:
-                        self.previous_text = text  # 更新 previous_text
                         return True
+                    if "Continue generating" in text:
+                        button.click()  # 如果文本是 "Continue generating" 则点击按钮\
+                        time.sleep(1)
                         # print(text)
                         # ls = self.get_all_data_testids()
                         # content = self.get_paragraph_content_from_div(ls[-1])

@@ -105,6 +105,9 @@ def write(title ,num,gpt_num):
     savetxt(txt,'./output/debug/conclusion_input.txt')
     # savetxt(gpt.getLastMessage())
     time.sleep(2)
+    gpt.close_browser()
+    time.sleep(1)
+
     import lib.GPT.toword as toword
     toword.txt_to_word('./output/debug/abstract_input.txt', './output/debug/text_input.txt', './output/debug/conclusion_input.txt', './output/debug/output.docx',title)
     time.sleep(1)
