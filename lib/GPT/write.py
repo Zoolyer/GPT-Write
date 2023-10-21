@@ -4,6 +4,14 @@ from lib.GPT.sel import seg
 import time
 import os
 import sys
+import logging
+
+# Setting up logging
+log_dir = "log"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+logging.basicConfig(filename=os.path.join(log_dir, 'execution.log'), level=logging.INFO)
 
 def delete_file_if_exists(filename):
     """删除指定的文件，如果它存在"""
@@ -101,3 +109,4 @@ def write(title ,num,gpt_num):
     toword.txt_to_word('./output/debug/abstract_input.txt', './output/debug/text_input.txt', './output/debug/conclusion_input.txt', './output/debug/output.docx',title)
     time.sleep(1)
     seg(title=title)
+    logging.info(f"Execution completed successfully for title: {title} with num: {num} and gpt_num: {gpt_num}")
