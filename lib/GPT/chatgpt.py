@@ -12,6 +12,13 @@ import os
 from selenium.webdriver.chrome.service import Service
 import win32clipboard as clipboard
 import win32con
+
+import os
+
+# 使用os.getlogin()
+username1 = os.getlogin()
+
+
 def set_clipboard_text(text):
     """设置剪切板内容"""
     clipboard.OpenClipboard()
@@ -27,7 +34,7 @@ current_directory = os.path.dirname(current_directory)  # 获取父级目录
 
 # Append the relative path of the Chrome driver
 CHROME_DRIVER_PATH = os.path.join(current_directory, 'driver\chromedriver.exe')
-print(CHROME_DRIVER_PATH)
+
 
 class ChatGPT:
 
@@ -46,8 +53,8 @@ class ChatGPT:
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
 
-        CHROME_OPTIONS = "user-data-dir=" + os.path.join(current_directory, r'driver\chrome-win64\User Data')
-        print(CHROME_OPTIONS)
+        CHROME_OPTIONS = "user-data-dir=" + r'C:\Users\\'+username1+r'\AppData\Local\Google\Chrome for Testing\User Data'
+
         options.add_argument(CHROME_OPTIONS)
         time.sleep(2)
         
@@ -165,5 +172,5 @@ class ChatGPT:
 
 
 if __name__ == "__main__":
-    gpt = ChatGPT()
+    gpt = ChatGPT("3.5")
     gpt.start()
