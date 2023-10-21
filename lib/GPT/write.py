@@ -13,16 +13,23 @@ def delete_file_if_exists(filename):
 def savetxt(txt, name):
     with open(name, "a", encoding='utf-8') as file:
         file.write(txt + "\n")
+
+
 def trim_txt_content(txt, keywords=None):
+    # 删除所有<t之前的部分
+    start_pos = txt.find('<t')
+    if start_pos != -1:
+        txt = txt[start_pos:]
+
     # 查找最后一个换行符的位置
     if keywords is None:
-        keywords = ["以上内容","部分内容","此块内容","块内容","以上","论文","此部分"]
+        keywords = ["以上内容", "部分内容", "此块内容", "块内容", "以上", "论文", "此部分"]
     last_newline_pos = txt.rfind('\n')
     if last_newline_pos == -1:
         return txt  # 如果txt中没有换行符，直接返回原txt
 
     # 获取从最后一个换行符到txt末尾的内容
-    last_segment = txt[last_newline_pos+1:]
+    last_segment = txt[last_newline_pos + 1:]
 
     # 遍历关键词列表，判断该段内容中是否含有任何一个关键词
     for keyword in keywords:
@@ -32,6 +39,8 @@ def trim_txt_content(txt, keywords=None):
             break  # 找到一个关键词后即跳出循环，不再检查其他关键词
 
     return txt
+
+
 def write(title ,num,gpt_num):
 
     # 命令行参数处理
