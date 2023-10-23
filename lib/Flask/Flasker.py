@@ -23,7 +23,7 @@ app = Flask(__name__)
 
 title = "没有"
 thread_status = 0  # 0: 空, 1: 正在运行, -1: 执行错误, 2: 成功执行但还没下载文件
-paper = []
+paper = [0,]
 paper[0] = 0
 def log_request(num_value):
     """
