@@ -31,7 +31,7 @@ def trim_txt_content(txt, keywords=None):
 
     # 查找最后一个换行符的位置
     if keywords is None:
-        keywords = ["以上内容", "部分内容", "此块内容", "块内容", "以上", "论文", "此部分"]
+        keywords = ["这一部分","下一块","以上内容", "部分内容", "此块内容", "块内容", "以上", "论文", "此部分"]
     last_newline_pos = txt.rfind('\n')
     if last_newline_pos == -1:
         return txt  # 如果txt中没有换行符，直接返回原txt

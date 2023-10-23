@@ -2,8 +2,6 @@ import win32com.client as win32
 from win32com.client import constants
 import os
 import time
-import pygetwindow as gw
-import pyautogui
 
 # Get the current directory of this script
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -12,29 +10,17 @@ def seg(title="mor"):
     doc_app = win32.gencache.EnsureDispatch('Word.Application')
     doc_app.Visible = True
 
+
+
     # 打开一个已经存在的文档
     file_path = os.path.join(current_directory, '..\..\output\debug\output.docx')
     print(file_path)
     doc = doc_app.Documents.Open(file_path)
 
     # 添加延迟，确保Word处理完毕
-    time.sleep(3)
+    time.sleep(10)
 
-    # 将Word置于前台
-    word_windows = gw.getWindowsWithTitle('')
-    for win in word_windows:
-        if "Word" in win.title or ".docx" in win.title:
-            win.activate()
-            break
-    time.sleep(2)
     # 模拟按下回车键来关闭可能的弹窗
-    pyautogui.click()
-    time.sleep(1)
-    pyautogui.press('enter')
-    # 假设您已经知道在哪里插入分节符来创建第二部分和第三部分
-    time.sleep(2)
-
-
 
     # 为第二部分设置页码
     footer2 = doc.Sections(2).Footers(constants.wdHeaderFooterPrimary)
