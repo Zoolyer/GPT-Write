@@ -90,7 +90,7 @@ def process_txt_modified(input_filename, output_filename):
             cleaned_line = "".join(saved_tags[0]) + cleaned_content + saved_tags[1]
             cleaned_lines.append(cleaned_line)
         else:
-            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in [("（", "）"), ("(", ")")]):
+            if has_specific_brackets_content(line_without_tags):
                 continue
             cleaned_lines.append(line)
 

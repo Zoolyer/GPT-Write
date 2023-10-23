@@ -144,4 +144,3 @@ def write(title, num, gpt_num,paper):
     time.sleep(1)
     seg(title=title)
     logging.info(f"Execution completed successfully for title: {title} with num: {num} and gpt_num: {gpt_num}")
-

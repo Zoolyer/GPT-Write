@@ -1,2 +1,6 @@
 driver/chrome-win64
 .idea
+lib/GPT/__pycache__
+log
+output/debug
+test.py
