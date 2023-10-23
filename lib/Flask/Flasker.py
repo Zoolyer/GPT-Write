@@ -23,8 +23,9 @@ app = Flask(__name__)
 
 title = "没有"
 thread_status = 0  # 0: 空, 1: 正在运行, -1: 执行错误, 2: 成功执行但还没下载文件
-paper = [0,]
+paper = [0,0]
 paper[0] = 0
+paper[1] = 0
 def log_request(num_value):
     """
     Log the request to a file with the current timestamp and the calculated num.
@@ -158,7 +159,7 @@ def get_status():
     return jsonify({"status": thread_status})
 @app.route('/paper', methods=['GET'])
 def get_paper():
-    return jsonify({"status": paper[0]})
+    return jsonify({"status": paper[0], "time": paper[1]})
 
 @app.route('/request_count', methods=['GET'])
 def get_request_count():

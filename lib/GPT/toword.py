@@ -28,9 +28,16 @@ def process_txt_modified(input_filename, output_filename):
         return pattern.search(line) is not None
 
         # 定义一个函数来检查行中是否有特定的括号内容
-    def has_specific_brackets_content(line, start_bracket, end_bracket):
-        pattern = re.compile(r'.*' + re.escape(start_bracket) + r'(继续|续)' + re.escape(end_bracket) + r'.*')
-        return pattern.search(line) is not None
+
+    def has_specific_brackets_content(line):
+        patterns = [
+            r'\((继续|续|余下部分)\)',  # 英文括号
+            r'（(继续|续|余下部分)）'  # 中文括号
+        ]
+        for pattern in patterns:
+            if re.search(pattern, line):
+                return True
+        return False
 
     def remove_tags_from_line(line):
         """移除指定的标签并返回移除的标签和没有标签的内容"""
@@ -39,6 +46,11 @@ def process_txt_modified(input_filename, output_filename):
         for tag in tags_to_remove:
             line = line.replace(tag, "")
         return saved_tags, line.strip()
+
+    def remove_part_brackets_content(line):
+        """移除 (部分) 和 （部分） 及其内容的函数"""
+        line = re.sub(r'\(部分\)', '', line)  # 英文括号
+        return re.sub(r'（部分）', '', line)  # 中文括号
 
     def remove_starting_index(line):
         split_content = line.split(" ")
@@ -59,6 +71,7 @@ def process_txt_modified(input_filename, output_filename):
         
         # 检查是否存在指定的t标签
         existing_tags = [tag for tag in ["t1", "t2", "t3"] if f"<{tag}>" in saved_tags]
+        line_without_tags = remove_part_brackets_content(line_without_tags)
 
         if existing_tags:
             # 如果存在特定的括号内容，则跳过此行
