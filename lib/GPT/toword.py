@@ -75,7 +75,7 @@ def process_txt_modified(input_filename, output_filename):
 
         if existing_tags:
             # 如果存在特定的括号内容，则跳过此行
-            if any(has_specific_brackets_content(line_without_tags, bracket[0], bracket[1]) for bracket in [("（", "）"), ("(", ")")]):
+            if has_specific_brackets_content(line_without_tags) :
                 continue
             cleaned_content = remove_starting_index(line_without_tags)
 

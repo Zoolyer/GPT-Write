@@ -130,6 +130,7 @@ def write(title, num, gpt_num,paper):
     paper[0] += 1
     gpt.send(loaded_data[4])
     check_with_timeout()
+
     txt = gpt.getLastMessage()
     savetxt(txt, './output/debug/conclusion_input.txt')
 
