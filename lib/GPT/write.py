@@ -1,3 +1,5 @@
+import re
+
 from lib.GPT.chatgpt import ChatGPT
 import json
 from lib.GPT.sel import seg
@@ -39,6 +41,20 @@ def trim_txt_content(txt, keywords=None):
     # 获取从最后一个换行符到txt末尾的内容
     last_segment = txt[last_newline_pos + 1:]
 
+    # 检查是否有形如 "(%d块)" 或 "(块%d)" 的模式
+    if re.search(r'\d+块', last_segment) or re.search(r'块\d+', last_segment):
+        txt = txt[:last_newline_pos]
+        return txt
+
+    # 检查最后一段是否以 "(" 开头，并以 ")" 结尾
+    if last_segment.startswith("（") and last_segment.endswith("）"):
+        txt = txt[:last_newline_pos]
+        return txt
+    # 检查最后一段是否以 "(" 开头，并以 ")" 结尾
+    if last_segment.startswith("(") and last_segment.endswith(")"):
+        txt = txt[:last_newline_pos]
+        return txt
+
     # 遍历关键词列表，判断该段内容中是否含有任何一个关键词
     for keyword in keywords:
         if keyword in last_segment:
@@ -49,8 +65,14 @@ def trim_txt_content(txt, keywords=None):
     return txt
 
 
-def write(title ,num,gpt_num):
+import time
+import sys
+import json
 
+
+# 请确保其他需要的库也已导入
+
+def write(title, num, gpt_num,paper):
     # 命令行参数处理
     if title == "没有":
         print("请设置标题")
@@ -67,49 +89,56 @@ def write(title ,num,gpt_num):
 
     gpt = ChatGPT(gpt_num)
     gpt.start()
-    gpt.send('请你充当一名专业学士，写一篇有关于<'+title+'>'+loaded_data[0])
-    while not gpt.check_and_print_button_text():
-        pass
-    # savetxt(gpt.getLastMessage())
 
-    gpt.send("给每一个子标题部分根据重要程度分配字数，然后以每700字为一块分成"+str(num)+"块，总字数在"+str(num*700)+loaded_data[1])
+    paper[0] = 0  # 设置状态变量
 
-    while not gpt.check_and_print_button_text():
-        pass
+    def check_with_timeout(timeout=180):  # 设置3分钟的超时
+        start_time = time.time()
+        while not gpt.check_and_print_button_text():
+            if time.time() - start_time > timeout:
+                raise TimeoutError(f"Operation timed out after {timeout} seconds. State: {state}")
+            time.sleep(1)
+
+    gpt.send('请你充当一名专业学士，写一篇有关于<' + title + '>' + loaded_data[0])
+    check_with_timeout()
+    paper[0] += 1
+
+    gpt.send(
+        "给每一个子标题部分根据重要程度分配字数，然后以每700字为一块分成" + str(num) + "块，总字数在" + str(num * 700) +
+        loaded_data[1])
+    check_with_timeout()
+    paper[0] += 1
 
     content = gpt.getLastMessage()
     for i in range(num):
-        sendtext = '接下来开始输出第'+str(i+1)+'块的内容。'+loaded_data[2]+content
-
+        sendtext = '接下来开始输出第' + str(i + 1) + '块的内容，700字左右。' + loaded_data[2] + content
         gpt.send(sendtext)
-        while not gpt.check_and_print_button_text():
-            pass
+        check_with_timeout()
+        paper[0] += 1
         txt = gpt.getLastMessage()
-        
         txt = trim_txt_content(txt)
-        savetxt(txt,'./output/debug/text_input.txt')
+        savetxt(txt, './output/debug/text_input.txt')
 
-
-    gpt.send('接下来根据上面的文章内容和<'+title+'>'+loaded_data[3])
-
-
-    while not gpt.check_and_print_button_text():
-        pass
+    gpt.send('接下来根据上面的文章内容和<' + title + '>' + loaded_data[3])
+    check_with_timeout()
+    paper[0] += 1
     txt = gpt.getLastMessage()
-    savetxt(txt,'./output/debug/abstract_input.txt')
+    savetxt(txt, './output/debug/abstract_input.txt')
 
     gpt.send(loaded_data[4])
-    while not gpt.check_and_print_button_text():
-        pass
+    check_with_timeout()
+    paper[0] += 1
     txt = gpt.getLastMessage()
-    savetxt(txt,'./output/debug/conclusion_input.txt')
-    # savetxt(gpt.getLastMessage())
+    savetxt(txt, './output/debug/conclusion_input.txt')
+
     time.sleep(2)
     gpt.close_browser()
     time.sleep(1)
 
     import lib.GPT.toword as toword
-    toword.txt_to_word('./output/debug/abstract_input.txt', './output/debug/text_input.txt', './output/debug/conclusion_input.txt', './output/debug/output.docx',title)
+    toword.txt_to_word('./output/debug/abstract_input.txt', './output/debug/text_input.txt',
+                       './output/debug/conclusion_input.txt', './output/debug/output.docx', title)
     time.sleep(1)
     seg(title=title)
     logging.info(f"Execution completed successfully for title: {title} with num: {num} and gpt_num: {gpt_num}")
+
