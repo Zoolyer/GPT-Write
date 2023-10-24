@@ -3,4 +3,4 @@ driver/chrome-win64
 lib/GPT/__pycache__
 log
 output/debug
-test.py
+./test.py

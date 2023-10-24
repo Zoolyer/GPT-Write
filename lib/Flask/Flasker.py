@@ -14,6 +14,23 @@ log_dir = "log"
 
 log_file_path = "./log/requests_log.txt"  # Define log file path
 
+import time
+
+def shutdown_check():
+    global thread_status
+    shutdown_counter = 0
+    while True:
+        time.sleep(10)  # check every 10 seconds
+        if thread_status == 0:
+            shutdown_counter += 10
+            if shutdown_counter >= 5*60:  # 5 minutes
+                os.system("shutdown /s /t 1")  # Shutdown the system (Windows command)
+                break
+        else:
+            shutdown_counter = 0  # reset counter if status changes
+
+
+
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
@@ -169,5 +186,10 @@ def get_request_count():
     total_requests = get_requests_in_last_duration()
     return jsonify({"request_count": total_requests})
 
+
 def run():
+    # Start the shutdown_check thread
+    shutdown_thread = threading.Thread(target=shutdown_check)
+    shutdown_thread.start()
+
     app.run(host='0.0.0.0', port=5000)
