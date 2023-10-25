@@ -16,20 +16,6 @@ log_file_path = "./log/requests_log.txt"  # Define log file path
 
 import time
 
-def shutdown_check():
-    global thread_status
-    shutdown_counter = 0
-    while True:
-        time.sleep(10)  # check every 10 seconds
-        if thread_status == 0:
-            shutdown_counter += 10
-            if shutdown_counter >= 5*60:  # 5 minutes
-                os.system("shutdown /s /t 1")  # Shutdown the system (Windows command)
-                break
-        else:
-            shutdown_counter = 0  # reset counter if status changes
-
-
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
@@ -43,6 +29,25 @@ thread_status = 0  # 0: 空, 1: 正在运行, -1: 执行错误, 2: 成功执行�
 paper = [0,0]
 paper[0] = 0
 paper[1] = 0
+
+
+
+def shutdown_check():
+    shutdown_counter = 0
+    while True:
+        time.sleep(10)  # check every 10 seconds
+        if thread_status == 0:
+            shutdown_counter += 10
+            if shutdown_counter >= 20*60:  # 5 minutes
+                logging.error(
+                    f"System shutdown")
+                os.system("shutdown /s /t 1")  # Shutdown the system (Windows command)
+                break
+        else:
+            shutdown_counter = 0  # reset counter if status changes
+
+
+
 def log_request(num_value):
     """
     Log the request to a file with the current timestamp and the calculated num.
@@ -104,8 +109,6 @@ def generate_document():
     global thread_status
 
     # Check if the limit is exceeded
-    if get_requests_in_last_duration() >= 50:
-        return jsonify({"error": "Request limit exceeded!"}), 429
     if thread_status == 1:
         return jsonify({"message": "Another task is currently running. Please wait."}), 429
 
