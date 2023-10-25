@@ -66,7 +66,7 @@ class ChatGPT:
         # time.sleep(2 + 1 * random.random())  # 随机延迟3到5秒
 
         try:
-            button = WebDriverWait(driver, 5).until(
+            button = WebDriverWait(driver, 8).until(
                 EC.presence_of_element_located(
                     (By.CSS_SELECTOR, 'div.flex.flex-row.justify-end > button.btn.btn-primary'))
             )

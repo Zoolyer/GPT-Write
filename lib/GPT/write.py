@@ -97,12 +97,13 @@ def write(title, num, gpt_num,paper):
         while not gpt.check_and_print_button_text():
             paper[1] = time.time() - start_time
             if time.time() - start_time > timeout:
-                raise TimeoutError(f"Operation timed out after {timeout} seconds. State: {state}")
+                raise TimeoutError(f"Operation timed out after {timeout} seconds. ")
             time.sleep(1)
 
-    paper[0] += 1
     gpt.send('请你充当一名专业学士，写一篇有关于<' + title + '>' + loaded_data[0])
     check_with_timeout()
+    paper[0] += 1
+
 
     gpt.send(
         "给每一个子标题部分根据重要程度分配字数，然后以每700字为一块分成" + str(num) + "块，总字数在" + str(num * 700) +
