@@ -30,8 +30,6 @@ def set_clipboard_text(text):
 
 # Get the current directory of this script
 current_directory = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件的目录
-current_directory = os.path.dirname(current_directory)  # 获取父级目录
-current_directory = os.path.dirname(current_directory)  # 获取父级目录
 
 # Append the relative path of the Chrome driver
 CHROME_DRIVER_PATH = os.path.join(current_directory, 'driver\chromedriver.exe')
@@ -40,42 +38,50 @@ class ChatGPT:
 
     def __init__(self, gpt):
         self.driver = None
-        if gpt == '4':
-            # self.WEB_URL = 'https://chatgpt.com/?model=gpt-4'
-            self.WEB_URL = 'https://chatgpt.com/?model=gpt-4o'
+        if gpt == "4":
+            self.WEB_URL = 'https://chat.openai.com/?model=gpt-4'
         else:
             self.WEB_URL = 'https://chatgpt.com/?model=text-davinci-002-render-sha'
         self.previous_text = ""
 
-        self.thread = threading.Thread(target=self.start_chrome_with_debugging)
-        self.thread.start()
+    def open_website_with_proxy(self):
+        options = webdriver.ChromeOptions()
+        # 禁用 window.navigator.webdriver 标志
+        CHROME_PATH = os.path.join(current_directory, 'driver\chrome-win64\chrome.exe')
+        options.binary_location = CHROME_PATH
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
 
-        time.sleep(1)
+        CHROME_OPTIONS = "user-data-dir=" + r'C:\Users\\' + username1 + r'\AppData\Local\Google\Chrome for Testing\User Data'
 
-        # Step 2: 使用Selenium WebDriver连接到这个已启动的浏览器
-        self.driver = self.connect_to_chrome_with_debugging()
-        # 现在你可以控制已启动的浏览器
-        self.driver.get(self.WEB_URL)
+        options.add_argument(CHROME_OPTIONS)
+        time.sleep(2)
 
-    def connect_to_chrome_with_debugging(self):
-        chrome_options = Options()
-        chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+        service = Service(CHROME_DRIVER_PATH)
+        driver = webdriver.Chrome(service=service, options=options)
+        # 打开网站并添加随机延迟https://chat.openai.com/?model=text-davinci-002-render-sha
+        driver.get(self.WEB_URL)
+        # time.sleep(2 + 1 * random.random())  # 随机延迟3到5秒
 
-        # 指定chromedriver的位置
-        chrome_driver_path = os.path.join(current_directory, 'driver', 'chromedriver.exe')
-        service = Service(chrome_driver_path)
+        # time.sleep(10)
+        try:
+            # button = WebDriverWait(driver, 8).until(
+            #     EC.presence_of_element_located(
+            #         (By.CSS_SELECTOR,
+            #          'button[data-testid="fruitjuice-send-button"].mb-1.me-1.flex.h-8.w-8.items-center.justify-center.rounded-full.bg-black.text-white.transition-colors.hover\\:opacity-70.focus-visible\\:outline-none.focus-visible\\:outline-black.disabled\\:bg-\\#D7D7D7.disabled\\:text-\\#f4f4f4.disabled\\:hover\\:opacity-100.dark\\:bg-white.dark\\:text-black.dark\\:focus-visible\\:outline-white.disabled\\:dark\\:bg-token-text-quaternary.dark\\:disabled\\:text-token-main-surface-secondary')
+            #     )
+            # )
+            button = WebDriverWait(driver, 8).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, 'button[data-testid="fruitjuice-send-button"]')
+                )
+            )
+            button.click()
+        except:
+            print("未能在指定时间内找到按钮，跳过点击操作。")
 
-        # 启动webdriver并连接到已启动的浏览器
-        driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
-    def start_chrome_with_debugging(self):
-        chrome_path = os.path.join(current_directory, 'driver', 'chrome-win64', 'chrome.exe')
-        chrome_user_data = r'C:\Users\\' + username1 + r'\AppData\Local\Google\Chrome for Testing\User Data'
-        remote_debugging_port = 9222
 
-        command = f'{chrome_path} --remote-debugging-port={remote_debugging_port} --user-data-dir="{chrome_user_data}"'
-        print(command)
-        os.system(command)
     def get_all_data_testids(self):
         """
             获取页面中所有包含data-testid属性的div元素的data-testid值
@@ -102,13 +108,6 @@ class ChatGPT:
 
         return div_element.text
 
-    def set_clipboard_text(self,text):
-        """设置剪切板内容"""
-        clipboard.OpenClipboard()
-        clipboard.EmptyClipboard()
-        clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
-        clipboard.CloseClipboard()
-
     def send_message_to_chat(self, message):
         # 定位输入框
         textarea = self.driver.find_element(By.ID, "prompt-textarea")
@@ -116,7 +115,7 @@ class ChatGPT:
         textarea.clear()
 
         # 将消息复制到剪切板
-        self.set_clipboard_text(message)
+        set_clipboard_text(message)
 
         # 粘贴消息到输入框
         textarea.send_keys(Keys.CONTROL, 'v')
@@ -139,17 +138,32 @@ class ChatGPT:
         # 尝试定位按钮
 
         try:
-            buttons1 = self.driver.find_elements(By.CSS_SELECTOR,  'button[data-testid="fruitjuice-send-button"]')
-            buttons2 = self.driver.find_elements(By.CSS_SELECTOR,  'button[data-testid="fruitjuice-stop-button"]')
-            if buttons1 :
-                return 1
-            elif buttons2:
-                return 0
-            else:
-                return -1
-        except:
-            return -1
+            buttons = self.driver.find_elements(By.CSS_SELECTOR, 'button.btn-neutral')
+            # 如果找到了按钮
+            if buttons:
+                button = buttons[0]
+                text = button.text
+                # 如果文本内容与上一次的不同
+                if text != self.previous_text:
+                    self.previous_text = text
+                    if "Regenerate" in text:
+                        return True
+                    if "Continue generating" in text:
+                        button.click()  # 如果文本是 "Continue generating" 则点击按钮\
+                        time.sleep(1)
+                        # print(text)
+                        # ls = self.get_all_data_testids()
+                        # content = self.get_paragraph_content_from_div(ls[-1])
+                        # print(content)
+
+        except StaleElementReferenceException:
+            # 当出现StaleElement异常时，您可以重新定位元素或者简单地返回，下次再尝试
+            return False
+
+        return False
+
     def start(self):
+        self.driver = self.open_website_with_proxy()
         time.sleep(1)
 
     def send(self, meg):
@@ -161,7 +175,8 @@ class ChatGPT:
         return self.get_content_from_div(self.get_all_data_testids()[-1])
 
 
-
 if __name__ == "__main__":
     gpt = ChatGPT("3.5")
     gpt.start()
+    # gpt.send("aaaaaaaaa")
+    time.sleep(100)

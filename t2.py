@@ -1,3 +1,9 @@
+import os
+import time
+import threading
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 import time
 import random
@@ -13,36 +19,19 @@ from selenium.webdriver.chrome.service import Service
 import win32clipboard as clipboard
 import win32con
 
-from selenium.webdriver.chrome.options import Options
 import os
-
-# 使用os.getlogin()
 username1 = os.getlogin()
 
+# 启动Chrome浏览器并启用远程调试
 
-def set_clipboard_text(text):
-    """设置剪切板内容"""
-    clipboard.OpenClipboard()
-    clipboard.EmptyClipboard()
-    clipboard.SetClipboardData(win32con.CF_UNICODETEXT, text)
-    clipboard.CloseClipboard()
-
-
-# Get the current directory of this script
-current_directory = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件的目录
-current_directory = os.path.dirname(current_directory)  # 获取父级目录
-current_directory = os.path.dirname(current_directory)  # 获取父级目录
-
-# Append the relative path of the Chrome driver
-CHROME_DRIVER_PATH = os.path.join(current_directory, 'driver\chromedriver.exe')
+# 配置Chrome选项以连接到远程调试端口
 
 class ChatGPT:
 
     def __init__(self, gpt):
         self.driver = None
-        if gpt == '4':
-            # self.WEB_URL = 'https://chatgpt.com/?model=gpt-4'
-            self.WEB_URL = 'https://chatgpt.com/?model=gpt-4o'
+        if gpt == 4:
+            self.WEB_URL = 'https://chat.openai.com/?model=gpt-4'
         else:
             self.WEB_URL = 'https://chatgpt.com/?model=text-davinci-002-render-sha'
         self.previous_text = ""
@@ -62,6 +51,7 @@ class ChatGPT:
         chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 
         # 指定chromedriver的位置
+        current_directory = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件的目录
         chrome_driver_path = os.path.join(current_directory, 'driver', 'chromedriver.exe')
         service = Service(chrome_driver_path)
 
@@ -69,6 +59,7 @@ class ChatGPT:
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
     def start_chrome_with_debugging(self):
+        current_directory = os.path.dirname(os.path.abspath(__file__))  # 获取当前文件的目录
         chrome_path = os.path.join(current_directory, 'driver', 'chrome-win64', 'chrome.exe')
         chrome_user_data = r'C:\Users\\' + username1 + r'\AppData\Local\Google\Chrome for Testing\User Data'
         remote_debugging_port = 9222
@@ -149,7 +140,8 @@ class ChatGPT:
                 return -1
         except:
             return -1
-    def start(self):
+    def start(self,driver):
+        self.driver = driver
         time.sleep(1)
 
     def send(self, meg):
@@ -160,8 +152,18 @@ class ChatGPT:
     def getLastMessage(self):
         return self.get_content_from_div(self.get_all_data_testids()[-1])
 
-
-
 if __name__ == "__main__":
-    gpt = ChatGPT("3.5")
-    gpt.start()
+    # Step 1: 启动Chrome浏览器并启用远程调试
+    # 等待几秒钟以确保浏览器已启动并启用了远程调试
+    c = ChatGPT(3.5)
+    time.sleep(2)
+    c.send("你好")
+    # time.sleep(3)
+    # print(c.check_and_print_button_text())
+    # print(c.getLastMessage())
+    while True:
+        print(c.check_and_print_button_text())
+        time.sleep(1)
+    time.sleep(100)  # 保持脚本运行以进行测试
+
+    driver.quit()

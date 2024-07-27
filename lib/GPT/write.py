@@ -71,7 +71,12 @@ import json
 
 
 # 请确保其他需要的库也已导入
+def wait(gpt):
 
+    time.sleep(5)
+    while gpt.check_and_print_button_text() != 1:
+        time.sleep(1)
+    time.sleep(2)
 def write(title, num, gpt_num,paper):
     paper[0] = 0  # 设置状态变量
     # 命令行参数处理
@@ -92,46 +97,38 @@ def write(title, num, gpt_num,paper):
     gpt.start()
 
 
-    def check_with_timeout(timeout=180):  # 设置3分钟的超时
-        start_time = time.time()
-        while not gpt.check_and_print_button_text():
-            paper[1] = time.time() - start_time
-            if time.time() - start_time > timeout:
-                raise TimeoutError(f"Operation timed out after {timeout} seconds. ")
-            time.sleep(1)
 
     gpt.send('请你充当一名专业学士，写一篇有关于<' + title + '>' + loaded_data[0])
-    check_with_timeout()
     paper[0] += 1
-
+    wait(gpt)
 
     gpt.send(
         "给每一个子标题部分根据重要程度分配字数，然后以每700字为一块分成" + str(num) + "块，总字数在" + str(num * 700) +
         loaded_data[1])
-    check_with_timeout()
     paper[0] += 1
 
+    wait(gpt)
     content = gpt.getLastMessage()
     for i in range(num):
         sendtext = '接下来开始输出第' + str(i + 1) + '块的内容，700字左右。' + loaded_data[2] + content
 
         paper[0] += 1
         gpt.send(sendtext)
-        check_with_timeout()
+        wait(gpt)
         txt = gpt.getLastMessage()
         txt = trim_txt_content(txt)
         savetxt(txt, './output/debug/text_input.txt')
 
     paper[0] += 1
     gpt.send('接下来根据上面的文章内容和<' + title + '>' + loaded_data[3])
-    check_with_timeout()
+    wait(gpt)
     txt = gpt.getLastMessage()
     savetxt(txt, './output/debug/abstract_input.txt')
 
     paper[0] += 1
     gpt.send(loaded_data[4])
-    check_with_timeout()
 
+    wait(gpt)
     txt = gpt.getLastMessage()
     savetxt(txt, './output/debug/conclusion_input.txt')
 
